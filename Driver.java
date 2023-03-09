@@ -1,4 +1,5 @@
 import csc3055.json.JsonIO;
+import csc3055.json.types.JSONArray;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,16 +9,24 @@ public class Driver {
 
     public static void main(String[] args)
     {
-        System.out.println("ee");
+        System.out.println("before startup");
         startup();
-        entriesCollection.addEntry(address, new Entry(username, password));
-        System.out.println(entriesCollection.getEntry(address));
+        System.out.println("after startup");
 
+        JSONArray entry = new JSONArray();
+        entry.add(username);
+        entry.add(password);
+        entriesCollection.addEntry(address, entry);
+        System.out.println(entriesCollection.getEntry(address));
+        System.out.println(entriesCollection.getEntry("google.com"));
+
+
+        shutdown();
     }
 
     //collection storing data
     public static Collection entriesCollection;
-    public static String address = "google.com";
+    public static String address = "amazon.com";
     public static String username = "user123";
     public static String password = "password123";
 
@@ -47,6 +56,19 @@ public class Driver {
         {
             System.out.println(ex);
             System.exit(1);
+        }
+    }
+
+    public static void shutdown()
+    {
+        try
+        {
+            JsonIO.writeSerializedObject(entriesCollection, new File("vault.json"));
+        }
+        catch (FileNotFoundException ex)
+        {
+            System.out.println("Could not save collection to disk.");
+            System.out.println(ex);
         }
     }
 }

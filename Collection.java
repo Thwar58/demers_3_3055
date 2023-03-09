@@ -20,7 +20,7 @@ import javax.crypto.NoSuchPaddingException;
  */
 public class Collection implements JSONSerializable
 {
-    private HashMap<String, Entry> entries;			// A hash map of username password entries.
+    private HashMap<String, JSONArray> entries;			// A hash map of username password entries.
     private String name; 			// The name of the collection.
     /**
      * Creates a new collection owned by {@code owner}.
@@ -58,7 +58,7 @@ public class Collection implements JSONSerializable
      * @param address the name of the website being added
      * @param entry the entry to add.
      */
-    public void addEntry(String address, Entry entry)
+    public void addEntry(String address, JSONArray entry)
     {
         this.entries.put(address, entry);
     }
@@ -69,7 +69,7 @@ public class Collection implements JSONSerializable
      * collection.
      * @return the entry or null if the entry does not exist.
      */
-    public Entry getEntry(String fname)
+    public JSONArray getEntry(String fname)
     {
         if (!entries.containsKey(fname))
             return null;
@@ -105,37 +105,13 @@ public class Collection implements JSONSerializable
     public void deserialize(JSONType obj) throws InvalidObjectException
     {
         JSONObject tmp;
-        JSONArray photoArray;
-        if (obj instanceof JSONObject)
-        {
-            tmp = (JSONObject)obj;
-            if (tmp.containsKey("name"))
-                name = tmp.getString("name");
-            else
-                throw new InvalidObjectException("Expected a Collection object -- name expected.");
-            if (tmp.containsKey("photos"))
-                photoArray = tmp.getArray("photos");
-            else
-                throw new InvalidObjectException("Expected a Collection object -- photos expected.");
+        tmp = (JSONObject) obj;
+        for(String key : tmp.keySet()){
+            System.out.println(key + " " + tmp.getArray(key));
+            this.entries.put(key,tmp.getArray(key));
         }
-        else
-            throw new InvalidObjectException("Expected a Collection object -- recieved array");
+        this.name = "Password Manager";
 
-        for (int i = 0; i < photoArray.size(); i++)
-        {
-            JSONObject currPhoto = photoArray.getObject(i);
-//            try
-            {
-                //photos.put(currPhoto.getString("fileName"), new Photograph(currPhoto));
-                int uselessVariable;
-            }
-//            catch (NoSuchPaddingException | NoSuchAlgorithmException ex)
-//            {
-//                System.out.println("Bad cryptographic mechanism!");
-//                ex.printStackTrace();
-//                System.exit(1);
-//            }
-        }
     }
 
     /**
@@ -147,7 +123,7 @@ public class Collection implements JSONSerializable
         JSONObject obj = new JSONObject();
 
         for (String key : entries.keySet()){
-            obj.put(key, entries.get(key).toJSONType());
+            obj.put(key, entries.get(key));
         }
 
         return obj;
