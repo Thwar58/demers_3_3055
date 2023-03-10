@@ -16,14 +16,15 @@ public class Driver {
         startup();
 
         JSONArray entry = new JSONArray();
-        entry.add("username");
-        entry.add("password");
-        entriesCollection.addEntry("website.com", entry);
+
+        //address user iv pass
+//        entriesCollection.addEntry("google.com", "bob","iv num exmpl", "password123");
 
         ArrayList<String> arr = entriesCollection.listAll();
-        System.out.println(generatePassword(9));
 
+        System.out.println("new Password is: "+generatePassword(9));
 
+        System.out.println(entriesCollection.getEntry("merrimack.edu"));
 
         shutdown();
     }
@@ -31,7 +32,6 @@ public class Driver {
     //collection storing data
     public static Collection entriesCollection;
 
-    public static String salt = "evk+aFczU8DQAyYrDYrX+w==";
 
     public static void startup()
     {

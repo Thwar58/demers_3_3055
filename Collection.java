@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.security.PublicKey;
@@ -17,18 +18,22 @@ import javax.crypto.NoSuchPaddingException;
  * This class represents a collection of Photographs. It stores all 
  * photographs in the entire system.
  * @author Zach Kissel
+ * modified by jason demers for the password manager project
  */
 public class Collection implements JSONSerializable
 {
-    private HashMap<String, JSONArray> entries;			// A hash map of username password entries.
+    private ArrayList<JSONObject> entries;			// An arraylist of hashmap entries per url
     private String name; 			// The name of the collection.
+
+    public static String salt; //salt of the collection
     /**
      * Creates a new collection owned by {@code owner}.
      */
     public Collection(String name)
     {
-        this.entries = new HashMap<>();
+        this.entries = new ArrayList<JSONObject>();
         this.name = name;
+        this.salt = "evk+aFczU8DQAyYrDYrX+w==";
     }
 
     /**
@@ -39,7 +44,7 @@ public class Collection implements JSONSerializable
      */
     public Collection(JSONObject obj) throws InvalidObjectException
     {
-        this.entries = new HashMap<>();
+        this.entries = new ArrayList<JSONObject>();
         deserialize(obj);
     }
 
@@ -56,36 +61,44 @@ public class Collection implements JSONSerializable
      * Modified by JD
      * Adds the entry the collection.
      * @param address the name of the website being added
-     * @param entry the entry to add.
      */
-    public void addEntry(String address, JSONArray entry)
+    public void addEntry(String address, String user, String iv, String pass)
     {
-        this.entries.put(address, entry);
+        JSONObject hash = new JSONObject();
+        hash.put("url", address);
+        hash.put("pass", pass);
+        hash.put("user", user);
+        hash.put("iv",iv);
+        this.entries.add(hash);
     }
 
     /**
      * Modified by JD
-     * Gets a entry with name fname from the
+     * Gets a entry with url name fname from the
      * collection.
      * @return the entry or null if the entry does not exist.
      */
-    public JSONArray getEntry(String fname)
+    public JSONObject getEntry(String fname)
     {
-        if (!entries.containsKey(fname))
-            return null;
-        return entries.get(fname);
+        for(int i = 0; i < entries.size(); i++){
+            if(entries.get(i).get("url").equals(fname)){
+                return entries.get(i);
+            }
+        }
+        return null;
     }
 
     /**
-     * List all photo names.
-     * @return an array list of photos.
+     * List all urls.
+     * @return an array list of url names.
      */
     public ArrayList<String> listAll()
     {
-        ArrayList<String> res = new ArrayList();
-        for (String key : entries.keySet())
-            res.add(key);
-        return res;
+        ArrayList<String> urls = new ArrayList<>();
+        for(int i = 0; i < entries.size(); i++){
+            urls.add(entries.get(i).getString("url"));
+        }
+        return urls;
     }
 
     /**
@@ -106,11 +119,13 @@ public class Collection implements JSONSerializable
     {
         JSONObject tmp;
         tmp = (JSONObject) obj;
-        for(String key : tmp.keySet()){
-            this.entries.put(key,tmp.getArray(key));
+        this.salt = tmp.getString("salt");
+        JSONArray accounts = tmp.getArray("accounts");
+        for(int i = 0; i < accounts.size(); i++){
+            entries.add(accounts.getObject(i));
         }
-        this.name = "Password Manager";
 
+//
     }
 
     /**
@@ -120,10 +135,12 @@ public class Collection implements JSONSerializable
      */
     public JSONType toJSONType() {
         JSONObject obj = new JSONObject();
-
-        for (String key : entries.keySet()){
-            obj.put(key, entries.get(key));
+        obj.put("salt",this.salt);
+        JSONArray jarr = new JSONArray();
+        for(int i = 0; i < entries.size(); i++){
+            jarr.add(entries.get(i));
         }
+        obj.put("accounts", jarr);
 
         return obj;
     }
