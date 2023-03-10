@@ -107,7 +107,6 @@ public class Collection implements JSONSerializable
         JSONObject tmp;
         tmp = (JSONObject) obj;
         for(String key : tmp.keySet()){
-            System.out.println(key + " " + tmp.getArray(key));
             this.entries.put(key,tmp.getArray(key));
         }
         this.name = "Password Manager";
@@ -128,4 +127,5 @@ public class Collection implements JSONSerializable
 
         return obj;
     }
+
 }
