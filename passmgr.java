@@ -1,7 +1,6 @@
 import csc3055.cli.LongOption;
 import csc3055.cli.OptionParser;
 import csc3055.json.JsonIO;
-import csc3055.json.types.JSONArray;
 import csc3055.util.Tuple;
 import org.bouncycastle.jcajce.spec.ScryptKeySpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -12,11 +11,9 @@ import javax.crypto.spec.GCMParameterSpec;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InvalidObjectException;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Random;
@@ -33,7 +30,6 @@ public class passmgr {
         // -l NSA.gov
 
         //the actual main for when everything is done
-        ///**
         // Make sure we have a suitable number of arguments.
         if (args.length < 1)
             usage();
@@ -44,26 +40,6 @@ public class passmgr {
             usage();
 
         shutdown();
-//        */
-//
-//        //Starts the program by either making the vault or loading it into entriesCollection
-//        startup();
-//
-//        //address user iv pass
-//
-//        String psw = "password123";//generatePassword(9);
-//
-//        System.out.println("new Password is: "+psw);
-//
-//        ArrayList<String> encryptedInfo = AESencrypt(psw);
-//
-//        System.out.println("Encrypted Password is: "+encryptedInfo.get(0));
-//
-//        String OGMsg = AESdecrypt(encryptedInfo.get(0),encryptedInfo.get(1));
-//
-//        System.out.println("Decrypted password: "+OGMsg);
-//
-//        shutdown();
     }
 
     //collection storing data
@@ -79,9 +55,12 @@ public class passmgr {
     private static String site = null;//used for new entry
     private static String password = null;//used for new entry
     private static String user = null;//used for new entry
-    private static String masterPassword = "qwe123";
+    private static String masterPassword = "MappingReductionsAreHard123";
     private static Key masterKey = null;
 
+    /**
+     * loads in the vault and if it doesnt exist makes a new one
+     */
     public static void startup()
     {
         File collFile = new File("vault.json");
@@ -111,6 +90,9 @@ public class passmgr {
         }
     }
 
+    /**
+     * writes the entries to the vault
+     */
     public static void shutdown()
     {
         try
@@ -124,6 +106,11 @@ public class passmgr {
         }
     }
 
+    /**
+     * generates a password of random charaters of the given length
+     * @param sz the size of the password
+     * @return the password in plaintext
+     */
     public static String generatePassword(int sz){
         String rtrn = "";
         String[] arr = {"q","w","e","r","t","y","u","i","o","p",
@@ -154,19 +141,13 @@ public class passmgr {
 
         Security.addProvider(new BouncyCastleProvider());
 
-        try {
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("SCRYPT");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-
 
         if(entriesCollection.getSalt()==null){
             byte[] byteSalt = new byte[16];
             SecureRandom rand = new SecureRandom();
             rand.nextBytes(byteSalt);
             String strSalt = Base64.getEncoder().encodeToString(byteSalt);
-            entriesCollection.setSalt(new String(strSalt));
+            entriesCollection.setSalt(strSalt);
 
         }
 
@@ -175,7 +156,7 @@ public class passmgr {
                 PARALLELIZATION, KEY_SIZE);
 
         // Generate the secrete key.
-        SecretKey key = null;
+        SecretKey key;
         try {
             key = SecretKeyFactory.getInstance("SCRYPT").generateSecret(scryptSpec);
         } catch (InvalidKeySpecException e) {
@@ -226,6 +207,7 @@ public class passmgr {
         }
 
         //updateAAD here before doFinal is called
+        //got help from william for the updateAAD method
         aesCipher.updateAAD(user.getBytes(StandardCharsets.UTF_8));
         aesCipher.updateAAD(site.getBytes(StandardCharsets.UTF_8));
 
@@ -249,6 +231,12 @@ public class passmgr {
         return rtrn;
     }
 
+    /**
+     * decrypts the given ctext wit the master key and the given iv
+     * @param ciphertext the encrypteed password
+     * @param iv the iv used to encrypt and decrypt the password
+     * @return the password in plaintext
+     */
     public static String AESdecrypt(String ciphertext, String iv){
 
         //in case the masterKey isn't made yet, its made here
@@ -281,6 +269,7 @@ public class passmgr {
             throw new RuntimeException(e);
         }
 
+        //got help with the update AAD from william
         aesCipher.updateAAD(entriesCollection.getEntry(URLtoLookUp).getString("user").getBytes(StandardCharsets.UTF_8));
         aesCipher.updateAAD(entriesCollection.getEntry(URLtoLookUp).getString("url").getBytes(StandardCharsets.UTF_8));
 
@@ -297,19 +286,6 @@ public class passmgr {
         return(new String(plaintext));
     }
 
-
-    public static void addToColl(String url, String name, String pass){
-        //url name iv pass
-        byte[] iv = new byte[16];
-        SecureRandom rand = new SecureRandom();
-        rand.nextBytes(iv);
-
-        //encrypt password here
-//        pass = encryptPassword(pass, iv);
-
-        entriesCollection.addEntry(url, name,""+iv, pass);
-
-    }
 
     /**
      * prints the usage so you know what you are doing
@@ -380,7 +356,7 @@ public class passmgr {
                     passwordSize = Integer.valueOf(currOpt.getSecond());
                     break;
                 case 'l':
-                    if (addFile == true && lookupURL == true)
+                    if (addFile && lookupURL)
                     {
                         System.out.println("Only one operation can be chosen at a time.");
                         return false;
@@ -394,6 +370,10 @@ public class passmgr {
         } // end while
 
         if (lookupURL){
+            if(entriesCollection.getEntry(URLtoLookUp) == null){
+                System.out.println("No Account Exists for this URL");
+                return true;
+            }
             System.out.println("Username: "+entriesCollection.getEntry(URLtoLookUp).get("user"));
             String encryptedPass = entriesCollection.getEntry(URLtoLookUp).getString("pass");
             String unlockedPass = AESdecrypt(encryptedPass,
@@ -412,7 +392,7 @@ public class passmgr {
                 }
                 password = generatePassword(passwordSize);
             }else{
-                password = "testPassword";
+                password = getPassword();
             }
 
             ArrayList<String> arr = AESencrypt(password);
@@ -424,15 +404,23 @@ public class passmgr {
     }
 
     /**
-     * asks for password and returns true if it is the same and false if different
+     * asks for password and returns  if it is the same and false if different
+     * @return true if it is the same and false if different
      */
     public static boolean passwordAccepted(){
         Scanner in = new Scanner(System.in);
-        System.out.println("Manager Password: ");
+        System.out.print("Manager Password: ");
         String allegedPassword = in.nextLine();
-        if(allegedPassword.equals((masterPassword))){
-            return true;
-        }
-        return false;
+        return allegedPassword.equals((masterPassword));
+    }
+
+    /**
+     * gets the password for the entry from the console after prompting the user
+     * @return the password in plaintext from the user
+     */
+    public static String getPassword(){
+        Scanner in = new Scanner(System.in);
+        System.out.print("Website Password: ");
+        return in.nextLine();
     }
 }

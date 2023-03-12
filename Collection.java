@@ -1,25 +1,13 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.lang.reflect.Array;
-import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.security.PublicKey;
-import java.security.PrivateKey;
 
-import csc3055.cli.LongOption;
-import csc3055.cli.OptionParser;
+import java.util.ArrayList;
+
 import csc3055.json.JSONSerializable;
 import csc3055.json.types.JSONObject;
 import csc3055.json.types.JSONArray;
 import csc3055.json.types.JSONType;
-import csc3055.util.Tuple;
 
 import java.io.InvalidObjectException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Scanner;
-import javax.crypto.NoSuchPaddingException;
+
 
 
 /**
@@ -31,7 +19,6 @@ import javax.crypto.NoSuchPaddingException;
 public class Collection implements JSONSerializable
 {
     private ArrayList<JSONObject> entries;			// An arraylist of hashmap entries per url
-    private String name; 			// The name of the collection.
 
     public static String salt; //salt of the collection
     /**
@@ -40,7 +27,6 @@ public class Collection implements JSONSerializable
     public Collection(String name)
     {
         this.entries = new ArrayList<JSONObject>();
-        this.name = name;
     }
 
     /**
@@ -51,23 +37,14 @@ public class Collection implements JSONSerializable
      */
     public Collection(JSONObject obj) throws InvalidObjectException
     {
-        this.name = "Password Manager";
         this.entries = new ArrayList<JSONObject>();
         deserialize(obj);
     }
 
-    /**
-     * Gets the name of the collection.
-     * @return the name of the collection.
-     */
-    public String getName()
-    {
-        return name;
-    }
 
     /**
      * Modified by JD
-     * Adds the entry the collection.
+     * Adds the entry the collection. replaces on if it exists with the same URL
      * @param address the name of the website being added
      */
     public void addEntry(String address, String user, String iv, String pass)
@@ -99,20 +76,6 @@ public class Collection implements JSONSerializable
             }
         }
         return null;
-    }
-
-    /**
-     * List all urls.
-     * unused!
-     * @return an array list of url names.
-     */
-    public ArrayList<String> listAll()
-    {
-        ArrayList<String> urls = new ArrayList<>();
-        for(int i = 0; i < entries.size(); i++){
-            urls.add(entries.get(i).getString("url"));
-        }
-        return urls;
     }
 
     /**
@@ -159,11 +122,19 @@ public class Collection implements JSONSerializable
         return obj;
     }
 
-    public static String getSalt() {
+    /**
+     * gets the salt value stored in the collection
+     * @return the salt as a base64 string
+     */
+    public String getSalt() {
         return salt;
     }
 
-    public static void setSalt(String salt) {
+    /**
+     * sets the salt of the collection
+     * @param salt the salt as a base64 String
+     */
+    public void setSalt(String salt) {
         Collection.salt = salt;
     }
 }
