@@ -1,8 +1,15 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.reflect.Array;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.security.PublicKey;
 import java.security.PrivateKey;
+
+import csc3055.cli.LongOption;
+import csc3055.cli.OptionParser;
 import csc3055.json.JSONSerializable;
 import csc3055.json.types.JSONObject;
 import csc3055.json.types.JSONArray;
@@ -11,6 +18,7 @@ import csc3055.util.Tuple;
 
 import java.io.InvalidObjectException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Scanner;
 import javax.crypto.NoSuchPaddingException;
 
 
@@ -33,7 +41,6 @@ public class Collection implements JSONSerializable
     {
         this.entries = new ArrayList<JSONObject>();
         this.name = name;
-        this.salt = "evk+aFczU8DQAyYrDYrX+w==";
     }
 
     /**
@@ -44,6 +51,7 @@ public class Collection implements JSONSerializable
      */
     public Collection(JSONObject obj) throws InvalidObjectException
     {
+        this.name = "Password Manager";
         this.entries = new ArrayList<JSONObject>();
         deserialize(obj);
     }
@@ -64,6 +72,11 @@ public class Collection implements JSONSerializable
      */
     public void addEntry(String address, String user, String iv, String pass)
     {
+        for(int i = 0; i < entries.size(); i++){
+            if(entries.get(i).get("url").equals(address)){
+                entries.remove(i);
+            }
+        }
         JSONObject hash = new JSONObject();
         hash.put("url", address);
         hash.put("pass", pass);
@@ -90,6 +103,7 @@ public class Collection implements JSONSerializable
 
     /**
      * List all urls.
+     * unused!
      * @return an array list of url names.
      */
     public ArrayList<String> listAll()
@@ -145,4 +159,11 @@ public class Collection implements JSONSerializable
         return obj;
     }
 
+    public static String getSalt() {
+        return salt;
+    }
+
+    public static void setSalt(String salt) {
+        Collection.salt = salt;
+    }
 }
