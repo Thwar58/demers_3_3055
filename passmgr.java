@@ -8,6 +8,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
+import java.io.Console;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InvalidObjectException;
@@ -408,9 +409,20 @@ public class passmgr {
      * @return true if it is the same and false if different
      */
     public static boolean passwordAccepted(){
-        Scanner in = new Scanner(System.in);
-        System.out.print("Manager Password: ");
-        String allegedPassword = in.nextLine();
+        Console console = System.console();
+
+        String allegedPassword; //the password passed in
+
+        //if console isn't accessed then the password is visible to the screen
+        if(console == null){
+            System.out.println("Console could not be accessed");
+            Scanner in = new Scanner(System.in);
+            System.out.print("Manager Password (Unsecure): ");
+            allegedPassword = in.nextLine();
+            return allegedPassword.equals((masterPassword));
+        }
+        System.out.print("Manager Password (Secure): ");
+        allegedPassword = String.valueOf(console.readPassword());
         return allegedPassword.equals((masterPassword));
     }
 
@@ -419,8 +431,17 @@ public class passmgr {
      * @return the password in plaintext from the user
      */
     public static String getPassword(){
-        Scanner in = new Scanner(System.in);
-        System.out.print("Website Password: ");
-        return in.nextLine();
+        Console console = System.console();
+
+        //if console isn't accessed then the password is visible to the screen
+        if(console == null){
+            System.out.println("Console could not be accessed");
+            Scanner in = new Scanner(System.in);
+            System.out.print("Website Password (Unsecure): ");
+            return in.nextLine();
+        }
+        System.out.print("Website Password (Secure): ");
+        String rtrn = String.valueOf(console.readPassword());
+        return rtrn;
     }
 }
